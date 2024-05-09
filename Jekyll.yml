@@ -1,0 +1,41 @@
+name: Jekyll Build and Deploy
+
+on:
+  push:
+    branches:
+      - main  # Déclencher le pipeline sur les modifications de la branche main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '5.x'  # Utiliser .NET Core 5.x
+
+    - name: Install Ruby and Jekyll
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ruby-full build-essential zlib1g-dev
+        echo '# Install Ruby Gems to ~/gems' >> ~/.bashrc
+        echo 'export GEM_HOME="$HOME/gems"' >> ~/.bashrc
+        echo 'export PATH="$HOME/gems/bin:$PATH"' >> ~/.bashrc
+        source ~/.bashrc
+        gem install jekyll bundler
+
+    - name: Build Jekyll site
+      run: |
+        bundle install
+        bundle exec jekyll build
+
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./_site
+        force_orphan: true  # Mettre à jour la branche sans historique précédent
